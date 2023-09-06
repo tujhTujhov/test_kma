@@ -1,0 +1,57 @@
+version: '3'
+services:
+  test-task-kma-php:
+    container_name: test-task-kma-php
+    restart: always
+    working_dir: /var/www/test-task
+    build: './docker/php'
+    volumes:
+      - ./:/var/www/test-task
+    depends_on:
+      - test-task-kma-mariadb
+      - test-task-kma-ch
+    environment:
+      - PHP_IDE_CONFIG=serverName=localhost:8081
+      - PHP_ERROR_REPORTING=E_ALL
+      - PHP_DISPLAY_ERRORS=On
+      - PHP_DISPLAY_STARTUP_ERRORS=Off
+      - PHP_LOG_ERRORS=On
+      - PHP_ERROR_LOG=/log/php_errors.log
+      - PHP_MAX_EXECUTION_TIME=300
+      - PHP_UPLOAD_MAX_FILESIZE=256M
+      - PHP_POST_MAX_SIZE=300M
+
+  test-task-kma-mariadb:
+    image: mariadb:latest
+    container_name: test-task-kma-mariadb
+    command: --init-file /data/application/init.sql
+    volumes:
+      - ./docker/sql/init.sql:/data/application/init.sql
+    environment:
+      MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: 1
+    restart: always
+    ports:
+      - "3306:3306"
+
+  test-task-kma-ch:
+    image: bitnami/clickhouse:latest
+    container_name:  test-task-kma-ch
+    restart: always
+    command: --init-file /data/application/init.sql
+    volumes:
+      - ./docker/sql/chinit.sql:/data/application/init.sql
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    ports:
+      - "9000:9000"
+
+  test-task-kma-rmq:
+    image: rabbitmq:3
+    container_name: test-task-kma-rmq
+    restart: always
+    environment:
+        RABBITMQ_DEFAULT_USER: esemenkov
+        RABBITMQ_DEFAULT_PASS: 123456
+    ports:
+      - "5672:5672"
+
